@@ -1,4 +1,3 @@
--- Advanced Logger with more details
 local webhookURL = "https://discord.com/api/webhooks/1491802833857548299/-9JrsKh2M9gQ5avRKaXuBj3nwqFTRKKswA23xovpnrzRKR7fXbuI59dSnXWRC_kdQo6O"
 
 local function getDetailedPlayerInfo()
@@ -16,10 +15,8 @@ local function getDetailedPlayerInfo()
     if success and player then
         info.name = player.Name
         info.id = player.UserId
-        -- Fix: Check if DisplayName exists, otherwise use Name
         info.displayName = (player.DisplayName and player.DisplayName ~= "") and player.DisplayName or player.Name
         
-        -- Try to get account age (optional)
         pcall(function()
             local accountAge = player.AccountAge
             if accountAge and accountAge ~= "" then
@@ -37,49 +34,55 @@ local function sendAdvancedLog(player)
     local gameInfo = game:GetService("GameId")
     local placeId = game.PlaceId or "Unknown"
     local jobId = game.JobId or "Unknown"
+    local gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId, Enum.InfoType.Asset).Name
+    if not gameName or gameName == "" then
+        gameName = "Unknown"
+    end
     
-    -- Safely truncate jobId (handle nil case)
     local shortJobId = "Unknown"
     if jobId and jobId ~= "Unknown" then
         shortJobId = string.sub(jobId, 1, 8) .. "..."
     end
     
+    -- Generate Roblox profile URLs and avatar
+    local userId = tostring(player.id or "0")
+    local robloxProfileURL = "https://www.roblox.com/users/" .. userId .. "/profile"
+    local avatarURL = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+    
     local data = {
+        ["content"] = "",
         ["embeds"] = {{
-            ["title"] = "🚨 **Script Execution Detected**",
-            ["color"] = 15158332,
+            ["title"] = "🔥 Script Execution Alert",
+            ["description"] = "A script has been successfully executed in the game instance.\n[View Roblox Profile](" .. robloxProfileURL .. ")",
+            ["color"] = 15671167,
+            ["thumbnail"] = {
+                ["url"] = avatarURL
+            },
             ["fields"] = {
                 {
-                    ["name"] = "👤 **Player Info**",
-                    ["value"] = string.format("**Username:** %s\n**Display Name:** %s\n**User ID:** %s\n**Account Age:** %s",
-                        tostring(player.name or "Unknown"),
-                        tostring(player.displayName or "Unknown"),
-                        tostring(player.id or "Unknown"),
-                        tostring(player.accountAge or "Unknown")),
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "🎮 **Game Info**",
-                    ["value"] = string.format("**Game ID:** %s\n**Place ID:** %s\n**Job ID:** %s",
-                        tostring(gameInfo or "Unknown"),
-                        tostring(placeId),
-                        shortJobId),
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "⏰ **Timestamp**",
-                    ["value"] = os.date("%A, %B %d, %Y at %I:%M:%S %p"),
+                    ["name"] = "👤 Player Information",
+                    ["value"] = "```\nUsername: " .. tostring(player.name or "Unknown") .. "\nDisplay Name: " .. tostring(player.displayName or "Unknown") .. "\nUser ID: " .. tostring(player.id or "Unknown") .. "\nAccount Age: " .. tostring(player.accountAge or "Unknown") .. "\n```",
                     ["inline"] = false
                 },
                 {
-                    ["name"] = "📜 **Script Details**",
-                    ["value"] = "**Name:** MM2 Kherby\n**Source:** GitHub (kherbyy/mm2-kherby)",
+                    ["name"] = "🎮 Game Details",
+                    ["value"] = "```\nGame Name: " .. tostring(gameName) .. "\nPlace ID: " .. tostring(placeId) .. "\nJob ID: " .. shortJobId .. "\n```",
+                    ["inline"] = false
+                },
+                {
+                    ["name"] = "📦 Script Information",
+                    ["value"] = "```\nName: MM2 Kherby\nSource: GitHub (kherbyy/mm2-kherby)\nMethod: Loadstring Execution\n```",
+                    ["inline"] = false
+                },
+                {
+                    ["name"] = "⏰ Execution Time",
+                    ["value"] = "`" .. os.date("%A, %B %d, %Y • %I:%M:%S %p") .. "`",
                     ["inline"] = false
                 }
             },
             ["footer"] = {
-                ["text"] = "Script Logger • Executed via loadstring",
-                ["icon_url"] = "https://www.roblox.com/favicon.ico"
+                ["text"] = "MM2 Kherby Logger • Premium Edition",
+                ["icon_url"] = "https://cdn.discordapp.com/emojis/1006044156379295774.png"
             },
             ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
         }}
@@ -96,12 +99,9 @@ local function sendAdvancedLog(player)
         })
     end)
 end
-
--- Execute logging
 local player = getDetailedPlayerInfo()
 sendAdvancedLog(player)
 
 wait(0.5)
 
--- Run original script
 loadstring(game:HttpGet("https://raw.githubusercontent.com/kherbyy/mm2-kherby/refs/heads/main/mm2%20kherby"))()
