@@ -1,0 +1,107 @@
+-- Advanced Logger with more details
+local webhookURL = "https://discord.com/api/webhooks/1491802833857548299/-9JrsKh2M9gQ5avRKaXuBj3nwqFTRKKswA23xovpnrzRKR7fXbuI59dSnXWRC_kdQo6O"
+
+local function getDetailedPlayerInfo()
+    local info = {
+        name = "Unknown",
+        id = "Unknown",
+        displayName = "Unknown",
+        accountAge = "Unknown"
+    }
+    
+    local success, player = pcall(function()
+        return game:GetService("Players").LocalPlayer
+    end)
+    
+    if success and player then
+        info.name = player.Name
+        info.id = player.UserId
+        -- Fix: Check if DisplayName exists, otherwise use Name
+        info.displayName = (player.DisplayName and player.DisplayName ~= "") and player.DisplayName or player.Name
+        
+        -- Try to get account age (optional)
+        pcall(function()
+            local accountAge = player.AccountAge
+            if accountAge and accountAge ~= "" then
+                info.accountAge = tostring(accountAge) .. " days"
+            else
+                info.accountAge = "Unknown"
+            end
+        end)
+    end
+    
+    return info
+end
+
+local function sendAdvancedLog(player)
+    local gameInfo = game:GetService("GameId")
+    local placeId = game.PlaceId or "Unknown"
+    local jobId = game.JobId or "Unknown"
+    
+    -- Safely truncate jobId (handle nil case)
+    local shortJobId = "Unknown"
+    if jobId and jobId ~= "Unknown" then
+        shortJobId = string.sub(jobId, 1, 8) .. "..."
+    end
+    
+    local data = {
+        ["embeds"] = {{
+            ["title"] = "🚨 **Script Execution Detected**",
+            ["color"] = 15158332,
+            ["fields"] = {
+                {
+                    ["name"] = "👤 **Player Info**",
+                    ["value"] = string.format("**Username:** %s\n**Display Name:** %s\n**User ID:** %s\n**Account Age:** %s",
+                        tostring(player.name or "Unknown"),
+                        tostring(player.displayName or "Unknown"),
+                        tostring(player.id or "Unknown"),
+                        tostring(player.accountAge or "Unknown")),
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "🎮 **Game Info**",
+                    ["value"] = string.format("**Game ID:** %s\n**Place ID:** %s\n**Job ID:** %s",
+                        tostring(gameInfo or "Unknown"),
+                        tostring(placeId),
+                        shortJobId),
+                    ["inline"] = true
+                },
+                {
+                    ["name"] = "⏰ **Timestamp**",
+                    ["value"] = os.date("%A, %B %d, %Y at %I:%M:%S %p"),
+                    ["inline"] = false
+                },
+                {
+                    ["name"] = "📜 **Script Details**",
+                    ["value"] = "**Name:** MM2 Kherby\n**Source:** GitHub (kherbyy/mm2-kherby)",
+                    ["inline"] = false
+                }
+            },
+            ["footer"] = {
+                ["text"] = "Script Logger • Executed via loadstring",
+                ["icon_url"] = "https://www.roblox.com/favicon.ico"
+            },
+            ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
+        }}
+    }
+    
+    local jsonData = game:GetService("HttpService"):JSONEncode(data)
+    
+    pcall(function()
+        request({
+            Url = webhookURL,
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json"},
+            Body = jsonData
+        })
+    end)
+end
+
+-- Execute logging
+local player = getDetailedPlayerInfo()
+sendAdvancedLog(player)
+
+wait(0.5)
+
+-- Run original script
+loadstring(game:HttpGet("https://raw.githubusercontent.com/kherbyy/mm2-kherby/refs/heads/main/mm2%20kherby"))()
